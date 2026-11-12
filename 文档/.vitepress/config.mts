@@ -5,21 +5,34 @@ const topics = [
     text: '固件基础',
     collapsed: false,
     items: [
-      { text: 'STM32H743 寄存器与内存布局', link: '/固件基础/STM32H743寄存器与内存布局' }
+      { text: 'MMIO 与 volatile', link: '/固件基础/MMIO与volatile' },
+      { text: 'STM32H743 存储映射', link: '/固件基础/STM32H743存储映射' },
+      { text: '链接脚本与启动初始化', link: '/固件基础/链接脚本与启动初始化' },
+      { text: 'Cache 与 DMA 一致性', link: '/固件基础/Cache与DMA一致性' }
     ]
   },
   {
     text: '外设通信',
     collapsed: false,
     items: [
-      { text: 'STM32H743 FDCAN 工程手册', link: '/外设通信/STM32H743-FDCAN工程手册' }
+      {
+        text: 'FDCAN 网关',
+        link: '/外设通信/FDCAN网关/工程导读',
+        collapsed: false,
+        items: [
+          { text: '时钟、引脚与位时序', link: '/外设通信/FDCAN网关/时钟引脚与位时序' },
+          { text: 'Message RAM 与收发中断', link: '/外设通信/FDCAN网关/消息存储与收发中断' },
+          { text: '联调与故障排查', link: '/外设通信/FDCAN网关/联调与故障排查' }
+        ]
+      },
+      { text: 'I²C 驱动与时序', link: '/外设通信/I2C驱动与时序' }
     ]
   },
   {
     text: '实时系统',
     collapsed: false,
     items: [
-      { text: 'FreeRTOS 与 I²C 调试', link: '/实时系统/FreeRTOS与I2C调试' }
+      { text: 'FreeRTOS 任务与内存排查', link: '/实时系统/FreeRTOS任务与内存排查' }
     ]
   },
   {
