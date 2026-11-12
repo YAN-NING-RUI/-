@@ -1,0 +1,21 @@
+:root {
+  --vp-c-brand-1: #176b63;
+  --vp-c-brand-2: #14786c;
+  --vp-c-brand-3: #0e6b5e;
+  --vp-c-brand-soft: #197d6c1a;
+}
+
+.dark {
+  --vp-c-brand-1: #75d8c6;
+  --vp-c-brand-2: #52b9a5;
+  --vp-c-brand-3: #277e70;
+  --vp-c-brand-soft: #45af9a24;
+}
+
+.vp-doc {
+  line-height: 1.75;
+}
+
+.vp-doc h2 {
+  letter-spacing: 0;
+}
