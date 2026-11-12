@@ -1,4 +1,4 @@
-# FreeRTOS 与 I²C 调试笔记
+# FreeRTOS 与 I²C 调试
 
 记录 STM32F103 项目中的 I²C 驱动选择、RAM 布局，以及任务和传感器初始化的排查思路。整理自《freertos系统的一些总结.md》。
 
@@ -29,9 +29,9 @@
 | STM32F103C8T6 | 64 KiB | 20 KiB |
 | STM32F103CBT6 | 128 KiB | 20 KiB |
 
-SRAM 常用于 `.data`、`.bss`、栈、堆和项目自定义段，具体位置看链接脚本和 `.map` 文件。零初始化的静态串口缓冲区通常位于 `.bss`。动态创建任务时，任务栈通常从 FreeRTOS 的分配器获得空间，静态创建任务时由调用者提供栈缓冲区。核算时检查所选的 `heap_*.c` 和实际分配路径，避免重复统计堆中的任务栈。
+静态串口缓冲区和任务栈都计入 SRAM 预算。先从链接映射中确认静态占用，再核算运行期间的任务栈和动态分配。动态创建任务时，任务栈通常从 FreeRTOS 的分配器获得空间，静态创建任务时由调用者提供栈缓冲区。核算时检查所选的 `heap_*.c` 和实际分配路径，避免重复统计堆中的任务栈。
 
-[STM32F103C8 · ST](https://www.st.com/en/microcontrollers-microprocessors/stm32f103c8.html) · [STM32F103CB · ST](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html) · [寄存器与内存布局](../firmware/stm32h743-registers-memory.md)
+[STM32F103C8 · ST](https://www.st.com/en/microcontrollers-microprocessors/stm32f103c8.html) · [STM32F103CB · ST](https://www.st.com/en/microcontrollers-microprocessors/stm32f103cb.html) · [寄存器与内存布局](../固件基础/STM32H743寄存器与内存布局.md)
 
 ## 项目现象与排查顺序
 

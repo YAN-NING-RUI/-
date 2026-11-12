@@ -1,7 +1,7 @@
 <script setup>
-import FdcanTiming from '../components/FdcanTiming.vue'
-import FdcanFifo from '../components/FdcanFifo.vue'
-import GatewayChecklist from '../components/GatewayChecklist.vue'
+import FdcanTiming from '../交互组件/位时序计算器.vue'
+import FdcanFifo from '../交互组件/接收队列演示.vue'
+import GatewayChecklist from '../交互组件/网关验证清单.vue'
 
 const checks = [
   "用截图或日志确认系统时钟、FDCAN kernel clock 和 500 kbit/s 计算一致。",
@@ -16,24 +16,15 @@ const checks = [
 
 # STM32H743 FDCAN 工程手册
 
-把这段对话里零散的寄存器、时钟树、复用引脚、CAN 位时序、Message RAM、中断和 FreeRTOS 重新串成一条完整的工程链路。面向你的当前练手项目：**H743 + FreeRTOS 的 CAN 网关**。
+面向 STM32H743 与 FreeRTOS 的双 CAN 网关，从 CubeIDE 配置、位时序和 Message RAM 讲到接收中断与实物验证。
 
 > 根据 2026 年 11 月 6 日的《STM32H743 FDCAN 学习手册》整理。配置参数是来源中的示例，接入实物时请核对工程和板卡。
 
-:::tip 要点
-**信息边界：**本手册使用你此前截图显示的参数作为「当前示例」，不是对本地完整 `.ioc` 工程或真实 PCB 的自动读取。特别是 `HSE_VALUE = 25000000UL`、时钟树选项、CAN 收发器与终端电阻，都必须结合实际代码和电路确认。
-:::
+示例以内部回环和经典 CAN 为起点。实际 HSE、收发器及终端配置以工程文件和板卡为准。
 
-| 示例参数 | 数值 | 核对项 |
-| --- | --- | --- |
-| 图中 HSE 输入 | 25 MHz | 应确认实物板提供该时钟 |
-| 图中 CPU 时钟 | 64 MHz | SYSCLK 当前选用 HSI |
-| FDCAN 标称速率 | 500 kb/s | 预分频 1，每位 50 tq |
-| Rx FIFO0 容量 | 4 帧 | 不是 4 Byte |
+延伸阅读：[STM32H743 寄存器与内存布局](../固件基础/STM32H743寄存器与内存布局.md) · [FreeRTOS 与 I²C 调试](../实时系统/FreeRTOS与I2C调试.md)
 
-延伸阅读：[STM32H743 寄存器访问与内存布局](../firmware/stm32h743-registers-memory.md) · [FreeRTOS 与 I²C 调试笔记](../rtos/freertos-i2c-debugging.md)
-
-## 先建立整体架构 {#overview}
+## CAN 网关架构 {#overview}
 
 你看到的 CubeMX 设置，是在给不同硬件模块填写工作规则；并不是让 CPU 用软件逐位模拟 CAN。
 
@@ -55,16 +46,11 @@ FreeRTOS 任务/队列、CAN1↔CAN2 路由、统计与实时性测试。
 **关键工程观念：**CPU 主频、FDCAN 内核时钟、APB 时钟是不同概念。CAN 线上每一个 bit 的传输并不由 CPU 中断手动完成，主要由独立的 FDCAN 硬件负责。
 :::
 
-### 本阶段究竟要证明什么？
-
-1. 硬件时钟、引脚和 Message RAM 配置能够正确初始化。
-2. 内部回环下能发出一帧并通过 FIFO + 中断读回。
-3. 中断能安全地向 FreeRTOS 任务传递完整数据。
-4. 最终两路 FDCAN 互联，在外部收发器支持下验证真实转发。
+验证顺序见[从内部回环到双 CAN 网关](#test)。
 
 **H743 是否“性能过剩”？**只做简单的 500 kb/s CAN 转发时，64 MHz 可能已经足够。选择 H743 的价值是让网关后续扩展到多总线、任务调度、数据处理、缓存/记录和协议转换；是否需要把 CPU 提升至 400/480 MHz，应依据 CPU 占用率和时延实测决定。
 
-## CubeIDE：配置在什么地方，代码又在哪？ {#ide}
+## CubeIDE 配置与源码位置 {#ide}
 
 最重要的是分清「配置模型」和「生成的 C 代码」。你截图里看到的是配置界面，程序真正运行的是初始化函数与寄存器操作。
 
@@ -90,30 +76,9 @@ FreeRTOS 任务/队列、CAN1↔CAN2 路由、统计与实时性测试。
 生成代码选项不同，初始化函数可能放在 `main.c` 或独立 `fdcan.c`；不应死记某一种文件路径。优先全工程搜索函数名。
 :::
 
-## 寄存器：展开的“小寄存器”究竟是什么？ {#registers}
+## 寄存器与位域 {#registers}
 
-寄存器窗口中缩进的 WT、WB、RA 等，通常是同一个寄存器内部的**位域（bit field）**，不是又分配了独立硬件地址的“小寄存器”。
-
-### 先看你截图里的 `[31:1]`
-
-在你的调试器视图中，冒号后的数字表示**位宽**，因此 `[31:1]` 表示从 bit 31 开始的 1 位字段；`[13:15]` 表示从 bit 13 开始、长度 15 位。它不是通常文档写法的 `[31:1]`（bit31 到 bit1）。
-
-| 界面字段 | 硬件含义 |
-| --- | --- |
-| `CCSIDR` | Cache Size ID Register：描述某一层级 Cache 的结构与能力。 |
-| `WT / WB` | 是否支持 Write-through / Write-back 缓存策略。 |
-| `RA / WA` | 是否支持 Read-allocate / Write-allocate 策略。 |
-| `NS / A / LS` | Cache 的组数、相联度与缓存行大小的编码字段，通常要按架构定义换算，不是直接把原值当字节数。 |
-
-:::tip 要点
-**不要混淆地址与值：**`0xE000ED80` 是 Cortex-M7 的 CCSIDR 寄存器地址；调试器如果在地址栏显示它，不等于寄存器内容就是该数值。
-:::
-
-以后你看到 `RCC_CFGR`、`GPIOB_MODER`、`FDCAN_RXF0C`，可以按照同样思路理解：**地址 → 整个寄存器 → 字段所在位 → 编码值 → 对硬件行为的影响**。
-
-:::tip 要点
-延伸到 H743 的 D-Cache：后续涉及 DMA、多个存储器区域（D1/D2/D3）时，需要关注 Cache 一致性和 DMA 可达性；这属于真正上线大吞吐系统时的重点，不是你现在 CAN 内部回环必须先解决的问题。
-:::
+调试器位域标记、CCSIDR 示例与汇编读改写集中在[寄存器位域与汇编读改写](../固件基础/STM32H743寄存器与内存布局.md#register-fields)。
 
 ## 时钟树：HSI、HSE 和 PLL 如何配合？ {#clocks}
 
@@ -213,8 +178,6 @@ UDS 诊断仪（发起诊断请求） → CAN 网络 / 网关（转发正确的 
 
 一个标称 CAN bit 通常分为固定 `Sync_Seg = 1 tq`、可配置 `TimeSeg1` 和 `TimeSeg2`。
 
-标称位从同步段（1 tq）开始，经过 TimeSeg1（39 tq）到达采样点，再经过 TimeSeg2（10 tq）到达位终点。
-
 **你的截图实例：**FDCAN 时钟 25 MHz，Nominal Prescaler = 1，TimeSeg1 = 39，TimeSeg2 = 10，因此 tq=40 ns，一位=50 tq=2000 ns，波特率 500 kbit/s，采样点为 80%。
 
 ### 位时序实时计算器
@@ -293,7 +256,7 @@ Tx FIFO        : 4 × 16B =  64B
 
 这是仅对已配置区域进行的基本内存布局计算，不代表当前整个 FDCAN 子系统只有 132B RAM，也不替代实际生成代码对双 FDCAN 共享布局的验证。
 
-### 过滤器与 FIFO 是两个不同层次
+### 过滤器与 FIFO {#filters}
 
 收到完整 CAN 帧（ID / DLC / Data） → 过滤规则（决定接受及投递位置） → Rx FIFO0 / FIFO1（排队等待 CPU 读取）
 
@@ -301,9 +264,9 @@ Tx FIFO        : 4 × 16B =  64B
 
 此外还要检查 `HAL_FDCAN_ConfigGlobalFilter`，因为不匹配单独过滤器的报文也会按照全局过滤规则处理，不能凭“只配置了一条 Filter”就断言其他报文全被拒绝。
 
-## 中断、FIFO 与 FreeRTOS：你最关心的实际处理链 {#irq}
+## FIFO 中断与 FreeRTOS 接收链路 {#irq}
 
-### NVIC 的三项配置是什么意思？
+### NVIC 中断线路
 
 | 配置项 | 含义 | 初期建议 |
 | --- | --- | --- |
@@ -315,13 +278,13 @@ Tx FIFO        : 4 × 16B =  64B
 
 报文被放入 Rx FIFO0（FDCAN 硬件） → 控制器事件标志（NEW_MESSAGE / WATERMARK / FULL） → NVIC IT0（进入 ISR） → HAL 回调（GetRxMessage 取走数据） → FreeRTOS 队列（网关任务后续处理）
 
-### 三个“开关”缺一不可
+### 启用接收中断
 
 1. **NVIC 启用：**CubeIDE 中勾选 `FDCAN1 interrupt 0`，生成 `FDCAN1_IT0_IRQHandler()`。
 2. **控制器通知启用：**`HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0)`。
 3. **回调与 FIFO 读取：**在 `HAL_FDCAN_RxFifo0Callback()` 内，通过 `HAL_FDCAN_GetRxMessage()` 从 FIFO 取走报文。
 
-### FIFO0 中断演示
+### FIFO0 中断演示 {#fifo-demo}
 
 假设 FIFO 深度为 4 帧。切换中断条件后逐帧接收，观察事件在何时产生。
 
@@ -375,13 +338,13 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
 **重要：**这是逻辑骨架，不是直接可编译的整套工程；实际还需配置 Filter / GlobalFilter、完整错误检查和任务队列。使用 `xQueueSendFromISR()` 时，要保证 ISR 优先级符合 FreeRTOS 限制。
 :::
 
-### FreeRTOS 中断优先级怎么理解？
+### FreeRTOS 中断优先级
 
 STM32 NVIC 中较小的优先级数值代表较高抢占优先级。你截图里的 Preemption Priority = 5，是否适合在回调中调用 `xQueueSendFromISR()`，取决于 `FreeRTOSConfig.h` 中的 `configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY`。在常见配置下，允许调用 FreeRTOS ISR API 的中断数值应不小于该阈值（并须匹配优先级位数与分组）。
 
 中断回调只做**快速取帧、复制结构、入队、必要时请求任务切换**；ID 过滤后的路由策略、统计和发送由 FreeRTOS 任务完成。不要在 ISR 中执行长时间等待、阻塞式打印或重计算。
 
-## 没有真实 ECU：从内部回环到双 CAN 网关 {#test}
+## 从内部回环到双 CAN 网关 {#test}
 
 #### 阶段 A · 无外设
 
@@ -410,19 +373,19 @@ FDCAN1 Internal Loopback；一个 MCU 就能验证过滤器、FIFO、接收中�
 **边界要分清：**内部回环成功不能证明物理 CAN 总线可用。外部测试还涉及收发器、接线、终端、电平兼容、共同标称位速率、ACK、布线噪声等。没有真实 ECU 时，可以用第二块 MCU 模拟 CAN 节点；要练习 UDS，再在其上实现一个极简的 UDS 服务端。
 :::
 
-### 做成可展示的工程，建议留下哪些证据？
+### 网关验证清单
 
 <GatewayChecklist :items="checks" />
 
-## 容易踩的坑：现象 → 根因 → 检查位置 {#errors}
+## 故障排查 {#errors}
 
 ### NVIC 已勾选，但没有收到中断
 
 确认：FDCAN 是否已 `HAL_FDCAN_Start()`；是否调用了 `HAL_FDCAN_ActivateNotification`；是否正确配置过滤器及全局过滤；FIFO0 元素数是否非 0；FDCAN1 interrupt 0 是否映射到预期线路；是否有有效报文被接收。
 
-### 配了 4 个 FIFO 元素，是不是收够 4 帧才中断？
+### FIFO 有报文但通知时机不符合预期
 
-不是。元素数是缓存容量。若启用 `NEW_MESSAGE`，每有新报文入 FIFO 就产生事件；若启用 `FULL`，满时才触发；若启用 `WATERMARK`，按配置阈值触发。水位字段为 0 时水位通知禁用。
+对照 [FIFO0 中断演示](#fifo-demo)，核对启用的事件、当前占用量和水位设置。
 
 ### SYSCLK=64 MHz，我明明已经配了 PLL，为什么没加速？
 
@@ -436,19 +399,15 @@ PLL 被配置不代表被系统时钟多路复用器选中。打开 Clock Config
 
 依次查：是否有外部 CAN 收发器、TXD/RXD 方向、CANH/CANL 走线、共地/隔离方案、终端、供电、两节点标称速率及采样点、总线 ACK、错误状态、模式是否还停留在 Loopback。
 
-### 我配置了 1 个 Filter，为什么其他 ID 还能进入 FIFO？
+### 收到预期之外的 ID
 
-`StdFiltersNbr=1` 只是预留过滤器槽位。是否配置了 `HAL_FDCAN_ConfigFilter`？不匹配的帧还受 `HAL_FDCAN_ConfigGlobalFilter` 决定。
+核对单条过滤规则和全局过滤设置，见[过滤器与 FIFO](#filters)。
 
 ### 进入回调，却出现 FreeRTOS assert 或卡死
 
 检查 NVIC 优先级和 `configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY`，是否使用了 `FromISR` API，队列句柄是否已创建，是否在 ISR 中调用阻塞 API、printf 或长时间循环。
 
-### CAN FD 的 Data 参数改了，Classic CAN 速率为何不变？
-
-Classic CAN 整帧使用 Nominal Bit Timing。Data Bit Timing 主要服务于 CAN FD 中启用 BRS 的数据阶段，不能直接影响经典 CAN 帧。
-
-## 速查：API、汇编与可靠参考资料 {#appendix}
+## API 与参考资料 {#appendix}
 
 | 名字 | 一句话作用 |
 | --- | --- |
@@ -462,18 +421,6 @@ Classic CAN 整帧使用 Nominal Bit Timing。Data Bit Timing 主要服务于 CA
 | `HAL_FDCAN_AddMessageToTxFifoQ()` | 向发送 FIFO/Queue 提交一条待发送报文。 |
 | `HAL_FDCAN_RxFifo0Callback()` | 用户接收事件回调，可在其中尽快取帧入队。 |
 
-### 顺带解释：你之前贴过的 ARM 汇编读—改—写
-
-```asm
-bl   HAL_GPIO_TogglePin  ; 调用函数，可能翻转 LED
-ldr  r3, [pc, #24]       ; 从 PC 相对位置加载一个字（可能是地址）
-ldr  r3, [r3, #0]       ; 读取该地址中的值
-adds r3, #1             ; 对寄存器中的值 +1
-str  r3, [r2, #0]       ; 写到 r2 指向的地址！
-```
-
-前三步可理解为“得到地址 → 读旧值 → 加 1”。但最后写回用的是 `r2` 而不是 `r3` 原地址，**必须确认 r2 当时的值**，才能断言写回的确是同一个 `g_heartbeat`。这就是看汇编时不能只根据变量注释猜测程序行为的原因。
-
 ### 推荐直接读的官方资料
 
 - [ST RM0433 · STM32H743 参考手册](https://www.st.com/resource/en/reference_manual/rm0433-stm32h742-stm32h743-753-and-stm32h750-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf) —— 以 RCC、GPIO、FDCAN、Memory Map 的寄存器定义为最终依据。
@@ -483,7 +430,3 @@ str  r3, [r2, #0]       ; 写到 r2 指向的地址！
 - [FreeRTOS 官方文档](https://www.freertos.org/) —— 任务、队列、ISR API 与 NVIC 优先级约束。
 
 资料链接用于后续深入核对，正文和交互计算均可在本页使用。不同 HAL / CubeMX 版本，宏与文件组织可能存在差异；以你的工程实际头文件为准。
-
-:::tip 要点
-**最后的学习路线建议：**先把时钟、过滤器、FIFO 和中断串起来，再用 FreeRTOS 队列和任务建可观察的数据流。等能够统计丢帧、时延、CPU 占用后，再评价是否需要调高主频、增加 FIFO 深度、改变中断策略。比单纯记住 CubeMX 每个参数更接近真实嵌入式工程能力。
-:::

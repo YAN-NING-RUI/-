@@ -6,34 +6,35 @@ export default defineConfig({
   description: '记录 STM32、底层固件、外设通信和硬件调试。',
   base: process.env.DOCS_BASE || '/',
   lastUpdated: true,
+  rewrites: { '首页.md': 'index.md' },
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
-      { text: '知识版图', link: '/roadmap' }
+      { text: '目录', link: '/目录' }
     ],
     sidebar: [
       {
         text: '固件基础',
         items: [
-          { text: 'STM32H743 寄存器访问与内存布局', link: '/firmware/stm32h743-registers-memory' }
+          { text: 'STM32H743 寄存器与内存布局', link: '/固件基础/STM32H743寄存器与内存布局' }
         ]
       },
       {
         text: '外设通信',
         items: [
-          { text: 'STM32H743 FDCAN 工程手册', link: '/peripherals/stm32h743-fdcan-handbook' }
+          { text: 'STM32H743 FDCAN 工程手册', link: '/外设通信/STM32H743-FDCAN工程手册' }
         ]
       },
       {
-        text: '实时操作系统',
+        text: '实时系统',
         items: [
-          { text: 'FreeRTOS 与 I²C 调试笔记', link: '/rtos/freertos-i2c-debugging' }
+          { text: 'FreeRTOS 与 I²C 调试', link: '/实时系统/FreeRTOS与I2C调试' }
         ]
       },
       {
         text: '硬件设计',
         items: [
-          { text: '隔离采样电路笔记', link: '/hardware/isolated-sampling' }
+          { text: '隔离采样电路', link: '/硬件设计/隔离采样电路' }
         ]
       }
     ],
