@@ -7,7 +7,7 @@
 需要 Node.js 22 或更新版本。
 
 ```powershell
-npm.cmd install
+npm.cmd ci
 npm.cmd run docs:dev
 ```
 

@@ -9,6 +9,6 @@ hero:
       text: 浏览知识版图
       link: /roadmap
     - theme: alt
-      text: 阅读 STM32H743 笔记
-      link: /firmware/stm32h743-registers-memory
+      text: 阅读 FDCAN 工程手册
+      link: /peripherals/stm32h743-fdcan-handbook
 ---

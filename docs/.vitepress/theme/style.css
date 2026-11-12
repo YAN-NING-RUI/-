@@ -19,3 +19,47 @@
 .vp-doc h2 {
   letter-spacing: 0;
 }
+
+.note-demo {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 0.75rem;
+  background: var(--vp-c-bg-soft);
+}
+
+.note-demo-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: 0.75rem;
+}
+
+.note-demo-controls label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.note-demo-controls input,
+.note-demo-controls select,
+.note-demo-actions button {
+  padding: 0.35rem 0.65rem;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 0.35rem;
+}
+
+.note-demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.note-demo :disabled {
+  opacity: 0.55;
+}
+
+.note-demo :focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}

@@ -17,6 +17,24 @@ export default defineConfig({
         items: [
           { text: 'STM32H743 寄存器访问与内存布局', link: '/firmware/stm32h743-registers-memory' }
         ]
+      },
+      {
+        text: '外设通信',
+        items: [
+          { text: 'STM32H743 FDCAN 工程手册', link: '/peripherals/stm32h743-fdcan-handbook' }
+        ]
+      },
+      {
+        text: '实时操作系统',
+        items: [
+          { text: 'FreeRTOS 与 I²C 调试笔记', link: '/rtos/freertos-i2c-debugging' }
+        ]
+      },
+      {
+        text: '硬件设计',
+        items: [
+          { text: '隔离采样电路笔记', link: '/hardware/isolated-sampling' }
+        ]
       }
     ],
     outline: { level: [2, 3], label: '本页目录' },
