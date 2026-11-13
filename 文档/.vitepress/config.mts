@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { sectionUpdates } from './小节修改时间.mts'
 
 const topics = [
   {
@@ -61,6 +62,7 @@ export default defineConfig({
   lastUpdated: true,
   appearance: 'dark',
   rewrites: { '首页.md': 'index.md' },
+  markdown: { config: sectionUpdates },
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
