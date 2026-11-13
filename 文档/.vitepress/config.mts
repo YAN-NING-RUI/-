@@ -8,7 +8,16 @@ const topics = [
       { text: 'MMIO 与 volatile', link: '/固件基础/MMIO与volatile' },
       { text: 'STM32H743 存储映射', link: '/固件基础/STM32H743存储映射' },
       { text: '链接脚本与启动初始化', link: '/固件基础/链接脚本与启动初始化' },
-      { text: 'Cache 与 DMA 一致性', link: '/固件基础/Cache与DMA一致性' }
+      { text: 'Cache 与 DMA 一致性', link: '/固件基础/Cache与DMA一致性' },
+      {
+        text: 'Cortex-M7 汇编',
+        collapsed: false,
+        items: [
+          { text: 'Thumb-2 指令与寻址', link: '/固件基础/Cortex-M7汇编/Thumb-2指令与寻址' },
+          { text: '栈与异常入栈', link: '/固件基础/Cortex-M7汇编/栈与异常入栈' },
+          { text: '函数调用与 ABI', link: '/固件基础/Cortex-M7汇编/函数调用与ABI' }
+        ]
+      }
     ]
   },
   {

@@ -65,17 +65,7 @@ typedef struct {
 
 以后你看到 `RCC_CFGR`、`GPIOB_MODER`、`FDCAN_RXF0C`，可以按照同样思路理解：**地址 → 整个寄存器 → 字段所在位 → 编码值 → 对硬件行为的影响**。
 
-### 从 ARM 汇编追踪写回地址
-
-```asm
-bl   HAL_GPIO_TogglePin  ; 调用函数，可能翻转 LED
-ldr  r3, [pc, #24]       ; 从 PC 相对位置加载一个字（可能是地址）
-ldr  r3, [r3, #0]       ; 读取该地址中的值
-adds r3, #1             ; 对寄存器中的值 +1
-str  r3, [r2, #0]       ; 写到 r2 指向的地址！
-```
-
-两条 ldr 和一条 adds 依次加载地址、读取旧值和加 1。但最后写回用的是 `r2` 而不是 `r3` 原地址，**必须确认 r2 当时的值**，才能断言写回的确是同一个 `g_heartbeat`。这就是看汇编时不能只根据变量注释猜测程序行为的原因。
+逐条分析 `LDR`、`ADDS` 与 `STR` 的实例见 [从反汇编追踪读写地址](./Cortex-M7汇编/Thumb-2指令与寻址.md#disassembly)。
 
 ## volatile 与寄存器访问
 
