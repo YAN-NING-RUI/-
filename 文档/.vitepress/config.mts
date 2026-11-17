@@ -7,7 +7,9 @@ const topics = [
     collapsed: false,
     items: [
       { text: 'MMIO 与 volatile', link: '/固件基础/MMIO与volatile' },
+      { text: 'C 语言对象指针与函数指针', link: '/固件基础/C语言对象指针与函数指针' },
       { text: 'STM32H743 存储映射', link: '/固件基础/STM32H743存储映射' },
+      { text: 'STM32H743 的 MPU 区域配置', link: '/固件基础/STM32H743的MPU区域配置' },
       { text: '链接脚本与启动初始化', link: '/固件基础/链接脚本与启动初始化' },
       { text: 'Cache 与 DMA 一致性', link: '/固件基础/Cache与DMA一致性' },
       {
@@ -42,6 +44,7 @@ const topics = [
     text: '实时系统',
     collapsed: false,
     items: [
+      { text: 'CMSIS-RTOS2 线程创建与参数', link: '/实时系统/CMSIS-RTOS2线程创建与参数' },
       { text: 'FreeRTOS 任务与内存排查', link: '/实时系统/FreeRTOS任务与内存排查' }
     ]
   },
