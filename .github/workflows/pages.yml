@@ -1,0 +1,58 @@
+name: 发布嵌入式笔记站
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: 获取笔记与完整 Git 历史
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 设置 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: 读取 GitHub Pages 配置
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: 安装依赖
+        run: npm ci
+      - name: 生成笔记站
+        run: npm run docs:build
+        env:
+          DOCS_BASE: ${{ steps.pages.outputs.base_path }}/
+      - name: 打包网页
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 文档/.vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
