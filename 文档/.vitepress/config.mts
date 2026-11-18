@@ -12,6 +12,7 @@ const topics = [
       { text: 'STM32H743 的 MPU 区域配置', link: '/固件基础/STM32H743的MPU区域配置' },
       { text: '链接脚本与启动初始化', link: '/固件基础/链接脚本与启动初始化' },
       { text: 'Cache 与 DMA 一致性', link: '/固件基础/Cache与DMA一致性' },
+      { text: 'STM32CubeIDE 断点不命中排查', link: '/固件基础/STM32CubeIDE断点不命中排查' },
       {
         text: 'Cortex-M7 汇编',
         collapsed: false,
