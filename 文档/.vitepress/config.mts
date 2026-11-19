@@ -55,6 +55,14 @@ const topics = [
     items: [
       { text: '隔离采样电路', link: '/硬件设计/隔离采样电路' }
     ]
+  },
+  {
+    text: 'CAN网关项目实际遇到问题的笔记',
+    collapsed: false,
+    items: [
+      { text: '项目问题目录', link: '/CAN网关项目实际遇到问题的笔记/项目问题目录' },
+      { text: 'S2阶段双路FDCAN通信失败排查', link: '/CAN网关项目实际遇到问题的笔记/S2阶段双路FDCAN通信失败排查' }
+    ]
   }
 ]
 

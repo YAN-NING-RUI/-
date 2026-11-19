@@ -5,7 +5,8 @@ const topics = [
   { name: '固件基础', detail: '寄存器、存储映射、Cache 与汇编', tone: 'blue' },
   { name: '外设通信', detail: 'FDCAN 网关与 I²C 驱动', tone: 'mint' },
   { name: '实时系统', detail: '线程创建、任务调度与内存排查', tone: 'violet' },
-  { name: '硬件设计', detail: '隔离采样、滤波与差分输出', tone: 'amber' }
+  { name: '硬件设计', detail: '隔离采样、滤波与差分输出', tone: 'amber' },
+  { name: 'CAN网关项目实际遇到问题的笔记', detail: '复现现象、波形证据、排查过程与处理结果', tone: 'project' }
 ]
 
 const reading = [
@@ -41,7 +42,7 @@ const catalog = withBase('/目录.html')
     <section aria-labelledby="按专题浏览">
       <h2 id="按专题浏览">按专题浏览</h2>
       <div class="topic-grid">
-        <a v-for="topic in topics" :key="topic.name" class="topic-card" :data-tone="topic.tone" :href="catalog + '#' + topic.name">
+        <a v-for="topic in topics" :key="topic.name" class="topic-card" :data-tone="topic.tone" :href="catalog + '#' + topic.name.toLowerCase()">
           <strong>{{ topic.name }} <span class="entry-arrow" aria-hidden="true">↗</span></strong>
           <span class="entry-detail">{{ topic.detail }}</span>
         </a>
@@ -224,6 +225,10 @@ const catalog = withBase('/目录.html')
 .topic-card[data-tone="mint"] { --tone: var(--notes-mint); }
 .topic-card[data-tone="violet"] { --tone: var(--notes-violet); }
 .topic-card[data-tone="amber"] { --tone: var(--notes-amber); }
+.topic-card[data-tone="project"] {
+  --tone: var(--notes-mint);
+  grid-column: 1 / -1;
+}
 
 .topic-card::before {
   width: 20px;
