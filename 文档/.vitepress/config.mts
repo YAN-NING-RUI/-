@@ -46,7 +46,8 @@ const topics = [
     collapsed: false,
     items: [
       { text: 'CMSIS-RTOS2 线程创建与参数', link: '/实时系统/CMSIS-RTOS2线程创建与参数' },
-      { text: 'FreeRTOS 任务与内存排查', link: '/实时系统/FreeRTOS任务与内存排查' }
+      { text: 'FreeRTOS 任务与内存排查', link: '/实时系统/FreeRTOS任务与内存排查' },
+      { text: 'STM32H743 独立看门狗配置与喂狗', link: '/实时系统/STM32H743独立看门狗配置与喂狗' }
     ]
   },
   {
